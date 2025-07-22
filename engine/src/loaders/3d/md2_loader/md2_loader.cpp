@@ -13,6 +13,7 @@
 #include <string>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include "debug/debug.hpp"
 #include "loaders/3d/md2_loader/anorms.hpp"
 #include "file/file_utils.hpp"
@@ -295,15 +296,15 @@ std::unique_ptr<MeshBuilderData> MD2Loader::load(const char* fullpath,
 
     // Validar índices
     for (u8 j = 0; j < 3; j++) {
-      if (triangle->index_xyz[j] >= vertexCount) {
+      if (triangle->index_xyz[j] >= static_cast<s16>(vertexCount)) {
         printf("Warning: Invalid vertex index %d, clamping to %d\n", 
                triangle->index_xyz[j], vertexCount - 1);
-        triangle->index_xyz[j] = vertexCount - 1;
+        triangle->index_xyz[j] = static_cast<s16>(vertexCount - 1);
       }
-      if (triangle->index_st[j] >= stsCount) {
+      if (triangle->index_st[j] >= static_cast<s16>(stsCount)) {
         printf("Warning: Invalid ST index %d, clamping to %d\n", 
                triangle->index_st[j], stsCount - 1);
-        triangle->index_st[j] = stsCount - 1;
+        triangle->index_st[j] = static_cast<s16>(stsCount - 1);
       }
     }
 
