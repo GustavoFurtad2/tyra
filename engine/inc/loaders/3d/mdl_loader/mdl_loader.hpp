@@ -16,7 +16,7 @@
 
 namespace Tyra {
 
-struct MDLLoadersOptions {
+struct MDLLoaderOptions {
   bool flipUVs = false;
   float scale = 1.0F;
 };
@@ -26,10 +26,10 @@ class MDLLoader {
  public:
   static std::unique_ptr<MeshBuilderData> load(const char* fullpath);
   static std::unique_ptr<MeshBuilderData> load(const char* fullpath,
-                                               MDLLoadersOptions options);
+                                               MDLLoaderOptions options);
   static std::unique_ptr<MeshBuilderData> load(const std::string& fullpath);
   static std::unique_ptr<MeshBuilderData> load(const std::string& fullpath,
-                                               MDLLoadersOptions options);
-};
+                                               MDLLoaderOptions options);
+}
 
 } // namespace Tyra
