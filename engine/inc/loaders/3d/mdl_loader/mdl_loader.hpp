@@ -30,6 +30,6 @@ class MDLLoader {
   static std::unique_ptr<MeshBuilderData> load(const std::string& fullpath);
   static std::unique_ptr<MeshBuilderData> load(const std::string& fullpath,
                                                MDLLoaderOptions options);
-}
+};
 
 } // namespace Tyra

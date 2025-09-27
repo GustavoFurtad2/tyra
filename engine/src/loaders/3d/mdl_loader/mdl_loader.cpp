@@ -108,15 +108,15 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
   TYRA_ASSERT((header.ident == MDL_IDENT) && (header.version == MDL_VERSION),
               "This MDL file is not in correct format!");
 
-  file.seekg(header.ofs_bodyparts, SEEK_SET);
+  fseek(header.ofs_bodyparts, SEEK_SET);
   bodypart_t bodypart;
   fread(&bodypart, sizeof(bodypart), 1, file);
 
-  file.seekg(header.ofs_bodyparts + bodypart.modelindex, SEEK_SET);
+  fseek(header.ofs_bodyparts + bodypart.modelindex, SEEK_SET);
   model_t model;
   fread(&model, sizeof(model), 1, file);
 
-  file.seekg(header.ofs_bodyparts + model.meshindex, SEEK_SET);
+  fseek(header.ofs_bodyparts + model.meshindex, SEEK_SET);
   mesh_t mesh;
   fread(&mesh, sizeof(mesh), 1, file);
 
@@ -125,7 +125,7 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
   fread(trianglesBuffer, sizeof(triangle_t), mesh.num_tris, file);
 
   auto verticesBuffer = new mvertex_t[mesh.num_verts];
-  fseek(file. header.offset_bodyparts + mesh.vert_index, SEEK_SET);
+  fseek(file, header.offset_bodyparts + mesh.vert_index, SEEK_SET);
   fread(verticesBuffer, sizeof(mvertex_t), mesh.num_verts, file);
 
   fclose(file);
@@ -142,7 +142,7 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
 
   for (int i = 0; i < mesh.num_tris; i++) {
     for (int j = 0; j < 3; j++) {
-      int vertIndex = trianglesBuffer[i].vert_index[j]
+      int vertIndex = trianglesBuffer[i].vert_index[j];
       material->frames[0]->vertices[i * 3 + j].set(
         float(verticesBuffer[vertIndex].v[0]),
         float(verticesBuffer[vertIndex].v[1]),
