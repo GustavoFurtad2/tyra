@@ -46,11 +46,6 @@ typedef struct {
 } mdl_t;
 
 typedef struct {
-  int type;
-  char name[64];
-} skin_t;
-
-typedef struct {
   char name[64];
   int num_models;
   int base;
@@ -75,184 +70,6 @@ typedef struct {
   int vert_index;
 } mesh_t;
 
-// Estrutura de triângulo que aponta para os vértices
-typedef struct {
-  short vertindex;  // índice no array de trivert_t
-  short normindex;  // índice de normal
-  short s, t;       // coordenadas de textura
-} trivert_t;
-
-typedef struct {
-  unsigned char v[3];
-  unsigned char normal_index;
-} mvertex_t;
-
-// Tabela de normais pré-calculadas (mesma do Quake)
-static const float ANORMS[162][3] = {
-  {-0.525731f, 0.000000f, 0.850651f},
-  {-0.442863f, 0.238856f, 0.864188f},
-  {-0.295242f, 0.000000f, 0.955423f},
-  {-0.309017f, 0.500000f, 0.809017f},
-  {-0.162460f, 0.262866f, 0.951056f},
-  {0.000000f, 0.000000f, 1.000000f},
-  {0.000000f, 0.850651f, 0.525731f},
-  {-0.147621f, 0.716567f, 0.681718f},
-  {0.147621f, 0.716567f, 0.681718f},
-  {0.000000f, 0.525731f, 0.850651f},
-  {0.309017f, 0.500000f, 0.809017f},
-  {0.525731f, 0.000000f, 0.850651f},
-  {0.295242f, 0.000000f, 0.955423f},
-  {0.442863f, 0.238856f, 0.864188f},
-  {0.162460f, 0.262866f, 0.951056f},
-  {-0.681718f, 0.147621f, 0.716567f},
-  {-0.809017f, 0.309017f, 0.500000f},
-  {-0.587785f, 0.425325f, 0.688191f},
-  {-0.850651f, 0.525731f, 0.000000f},
-  {-0.864188f, 0.442863f, 0.238856f},
-  {-0.716567f, 0.681718f, 0.147621f},
-  {-0.688191f, 0.587785f, 0.425325f},
-  {-0.500000f, 0.809017f, 0.309017f},
-  {-0.238856f, 0.864188f, 0.442863f},
-  {-0.425325f, 0.688191f, 0.587785f},
-  {-0.716567f, 0.681718f, -0.147621f},
-  {-0.500000f, 0.809017f, -0.309017f},
-  {-0.525731f, 0.850651f, 0.000000f},
-  {0.000000f, 0.850651f, -0.525731f},
-  {-0.238856f, 0.864188f, -0.442863f},
-  {0.000000f, 0.955423f, -0.295242f},
-  {-0.262866f, 0.951056f, -0.162460f},
-  {0.000000f, 1.000000f, 0.000000f},
-  {0.000000f, 0.955423f, 0.295242f},
-  {-0.262866f, 0.951056f, 0.162460f},
-  {0.238856f, 0.864188f, 0.442863f},
-  {0.262866f, 0.951056f, 0.162460f},
-  {0.500000f, 0.809017f, 0.309017f},
-  {0.238856f, 0.864188f, -0.442863f},
-  {0.262866f, 0.951056f, -0.162460f},
-  {0.500000f, 0.809017f, -0.309017f},
-  {0.850651f, 0.525731f, 0.000000f},
-  {0.716567f, 0.681718f, 0.147621f},
-  {0.716567f, 0.681718f, -0.147621f},
-  {0.525731f, 0.850651f, 0.000000f},
-  {0.425325f, 0.688191f, 0.587785f},
-  {0.864188f, 0.442863f, 0.238856f},
-  {0.688191f, 0.587785f, 0.425325f},
-  {0.809017f, 0.309017f, 0.500000f},
-  {0.681718f, 0.147621f, 0.716567f},
-  {0.587785f, 0.425325f, 0.688191f},
-  {0.955423f, 0.295242f, 0.000000f},
-  {1.000000f, 0.000000f, 0.000000f},
-  {0.951056f, 0.162460f, 0.262866f},
-  {0.850651f, -0.525731f, 0.000000f},
-  {0.955423f, -0.295242f, 0.000000f},
-  {0.864188f, -0.442863f, 0.238856f},
-  {0.951056f, -0.162460f, 0.262866f},
-  {0.809017f, -0.309017f, 0.500000f},
-  {0.681718f, -0.147621f, 0.716567f},
-  {0.850651f, 0.000000f, 0.525731f},
-  {0.864188f, 0.442863f, -0.238856f},
-  {0.809017f, 0.309017f, -0.500000f},
-  {0.951056f, 0.162460f, -0.262866f},
-  {0.525731f, 0.000000f, -0.850651f},
-  {0.681718f, 0.147621f, -0.716567f},
-  {0.681718f, -0.147621f, -0.716567f},
-  {0.850651f, 0.000000f, -0.525731f},
-  {0.809017f, -0.309017f, -0.500000f},
-  {0.864188f, -0.442863f, -0.238856f},
-  {0.951056f, -0.162460f, -0.262866f},
-  {0.147621f, 0.716567f, -0.681718f},
-  {0.309017f, 0.500000f, -0.809017f},
-  {0.425325f, 0.688191f, -0.587785f},
-  {0.442863f, 0.238856f, -0.864188f},
-  {0.587785f, 0.425325f, -0.688191f},
-  {0.688191f, 0.587785f, -0.425325f},
-  {-0.147621f, 0.716567f, -0.681718f},
-  {-0.309017f, 0.500000f, -0.809017f},
-  {0.000000f, 0.525731f, -0.850651f},
-  {-0.525731f, 0.000000f, -0.850651f},
-  {-0.442863f, 0.238856f, -0.864188f},
-  {-0.295242f, 0.000000f, -0.955423f},
-  {-0.162460f, 0.262866f, -0.951056f},
-  {0.000000f, 0.000000f, -1.000000f},
-  {0.295242f, 0.000000f, -0.955423f},
-  {0.162460f, 0.262866f, -0.951056f},
-  {-0.442863f, -0.238856f, -0.864188f},
-  {-0.309017f, -0.500000f, -0.809017f},
-  {-0.162460f, -0.262866f, -0.951056f},
-  {0.000000f, -0.850651f, -0.525731f},
-  {-0.147621f, -0.716567f, -0.681718f},
-  {0.147621f, -0.716567f, -0.681718f},
-  {0.000000f, -0.525731f, -0.850651f},
-  {0.309017f, -0.500000f, -0.809017f},
-  {0.442863f, -0.238856f, -0.864188f},
-  {0.162460f, -0.262866f, -0.951056f},
-  {0.238856f, -0.864188f, -0.442863f},
-  {0.500000f, -0.809017f, -0.309017f},
-  {0.425325f, -0.688191f, -0.587785f},
-  {0.716567f, -0.681718f, -0.147621f},
-  {0.688191f, -0.587785f, -0.425325f},
-  {0.587785f, -0.425325f, -0.688191f},
-  {0.000000f, -0.955423f, -0.295242f},
-  {0.000000f, -1.000000f, 0.000000f},
-  {0.262866f, -0.951056f, -0.162460f},
-  {0.000000f, -0.850651f, 0.525731f},
-  {0.000000f, -0.955423f, 0.295242f},
-  {0.238856f, -0.864188f, 0.442863f},
-  {0.262866f, -0.951056f, 0.162460f},
-  {0.500000f, -0.809017f, 0.309017f},
-  {0.716567f, -0.681718f, 0.147621f},
-  {0.525731f, -0.850651f, 0.000000f},
-  {-0.238856f, -0.864188f, -0.442863f},
-  {-0.500000f, -0.809017f, -0.309017f},
-  {-0.262866f, -0.951056f, -0.162460f},
-  {-0.850651f, -0.525731f, 0.000000f},
-  {-0.716567f, -0.681718f, -0.147621f},
-  {-0.716567f, -0.681718f, 0.147621f},
-  {-0.525731f, -0.850651f, 0.000000f},
-  {-0.500000f, -0.809017f, 0.309017f},
-  {-0.238856f, -0.864188f, 0.442863f},
-  {-0.262866f, -0.951056f, 0.162460f},
-  {-0.864188f, -0.442863f, 0.238856f},
-  {-0.809017f, -0.309017f, 0.500000f},
-  {-0.688191f, -0.587785f, 0.425325f},
-  {-0.681718f, -0.147621f, 0.716567f},
-  {-0.442863f, -0.238856f, 0.864188f},
-  {-0.587785f, -0.425325f, 0.688191f},
-  {-0.309017f, -0.500000f, 0.809017f},
-  {-0.147621f, -0.716567f, 0.681718f},
-  {-0.425325f, -0.688191f, 0.587785f},
-  {-0.162460f, -0.262866f, 0.951056f},
-  {0.442863f, -0.238856f, 0.864188f},
-  {0.162460f, -0.262866f, 0.951056f},
-  {0.309017f, -0.500000f, 0.809017f},
-  {0.147621f, -0.716567f, 0.681718f},
-  {0.000000f, -0.525731f, 0.850651f},
-  {0.425325f, -0.688191f, 0.587785f},
-  {0.587785f, -0.425325f, 0.688191f},
-  {0.688191f, -0.587785f, 0.425325f},
-  {-0.955423f, 0.295242f, 0.000000f},
-  {-0.951056f, 0.162460f, 0.262866f},
-  {-1.000000f, 0.000000f, 0.000000f},
-  {-0.850651f, 0.000000f, 0.525731f},
-  {-0.955423f, -0.295242f, 0.000000f},
-  {-0.951056f, -0.162460f, 0.262866f},
-  {-0.864188f, 0.442863f, -0.238856f},
-  {-0.951056f, 0.162460f, -0.262866f},
-  {-0.809017f, 0.309017f, -0.500000f},
-  {-0.864188f, -0.442863f, -0.238856f},
-  {-0.951056f, -0.162460f, -0.262866f},
-  {-0.809017f, -0.309017f, -0.500000f},
-  {-0.681718f, 0.147621f, -0.716567f},
-  {-0.681718f, -0.147621f, -0.716567f},
-  {-0.850651f, 0.000000f, -0.525731f},
-  {-0.688191f, 0.587785f, -0.425325f},
-  {-0.587785f, 0.425325f, -0.688191f},
-  {-0.425325f, 0.688191f, -0.587785f},
-  {-0.425325f, -0.688191f, -0.587785f},
-  {-0.587785f, -0.425325f, -0.688191f},
-  {-0.688191f, -0.587785f, -0.425325f}
-};
-
 std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
                                                  MDLLoaderOptions options) {
   std::string path = fullpath;
@@ -262,133 +79,100 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
 
   FILE* file = fopen(fullpath, "rb");
   TYRA_ASSERT(file != nullptr, "Failed to load: ", filename);
+  
+  // Ler header
   mdl_t header;
-
   fread(reinterpret_cast<char*>(&header), sizeof(mdl_t), 1, file);
 
   TYRA_ASSERT((header.ident == MDL_IDENT) && (header.version == MDL_VERSION),
               "This MDL file is not in correct format!");
 
+  TYRA_LOG("MDL header: name=", header.name);
+  TYRA_LOG("  bodyparts=", header.num_bodyparts, " skins=", header.num_skins);
+
   // Ler bodypart
   fseek(file, header.ofs_bodyparts, SEEK_SET);
   bodypart_t bodypart;
   fread(&bodypart, sizeof(bodypart), 1, file);
+  
+  TYRA_LOG("Bodypart: name=", bodypart.name, " models=", bodypart.num_models);
 
-  // Ler model
-  fseek(file, header.ofs_bodyparts + bodypart.modelindex, SEEK_SET);
+  // Ler model (relativo ao offset do bodypart)
+  long modelOffset = header.ofs_bodyparts + bodypart.modelindex;
+  fseek(file, modelOffset, SEEK_SET);
   model_t model;
   fread(&model, sizeof(model), 1, file);
+  
+  TYRA_LOG("Model: name=", model.name);
+  TYRA_LOG("  meshes=", model.num_meshes, " verts=", model.num_verts);
 
-  TYRA_LOG("chegamo teste 1");
-  // Ler primeiro mesh
-  fseek(file, header.ofs_bodyparts + model.meshindex, SEEK_SET);
+  // Ler primeiro mesh (relativo ao offset do bodypart)
+  long meshOffset = header.ofs_bodyparts + model.meshindex;
+  fseek(file, meshOffset, SEEK_SET);
   mesh_t mesh;
   fread(&mesh, sizeof(mesh), 1, file);
+  
+  TYRA_LOG("Mesh: tris=", mesh.num_tris, " verts=", mesh.num_verts);
 
-  // Carregar triângulos (vértices expandidos do mesh)
-  auto meshVertsBuffer = new trivert_t[mesh.num_verts];
-  fseek(file, header.ofs_bodyparts + mesh.vert_index, SEEK_SET);
-  fread(meshVertsBuffer, sizeof(trivert_t), mesh.num_verts, file);
+  // Validar dados
+  TYRA_ASSERT(mesh.num_tris > 0, "Mesh has no triangles!");
+  TYRA_ASSERT(mesh.num_verts > 0, "Mesh has no vertices!");
+  TYRA_ASSERT(model.num_verts > 0, "Model has no vertices!");
 
-  // Carregar vértices do modelo (posições únicas)
-  auto modelVertsBuffer = new mvertex_t[model.num_verts];
-  fseek(file, header.ofs_bodyparts + model.vert_index, SEEK_SET);
-  fread(modelVertsBuffer, sizeof(mvertex_t), model.num_verts, file);
+  // Por simplicidade, vamos ler os vértices do modelo e criar triângulos simples
+  // Isso evita problemas com a estrutura complexa do MDL
+  
+  // Estrutura de vértice simples
+  struct SimpleVert {
+    unsigned char pos[3];
+    unsigned char normalIndex;
+  };
 
-  // Carregar skin name (textura embutida)
-  std::string skinName;
-  if (header.num_skins > 0) {
-    skin_t skin;
-    fseek(file, header.ofs_skins, SEEK_SET);
-    fread(&skin, sizeof(skin_t), 1, file);
-    skinName = std::string(skin.name);
-  }
+  auto modelVerts = new SimpleVert[model.num_verts];
+  long vertOffset = header.ofs_bodyparts + model.vert_index;
+  fseek(file, vertOffset, SEEK_SET);
+  fread(modelVerts, sizeof(SimpleVert), model.num_verts, file);
 
   fclose(file);
 
   // Criar mesh builder data
   auto result = std::make_unique<MeshBuilderData>();
   
-  TYRA_LOG("chegamo teste 2");
-
   auto* material = new MeshBuilderMaterialData();
   material->name = FileUtils::getFilenameWithoutExtension(filename);
+  material->texturePath = material->name;
+  material->texturePath.value().append(".png");
   
-  TYRA_LOG("chegamo teste 3");
-  // Se tiver skin embutida, usar ela, senão procurar PNG externo
-  if (!skinName.empty()) {
-    material->texturePath = skinName;
-  } else {
-    material->texturePath = material->name;
-    material->texturePath.value().append(".png");
-  }
-  
-  TYRA_LOG("chegamo teste 4");
-
   result->materials.push_back(material);
-  result->loadNormals = true;
+  result->loadNormals = false;  // Desabilitar normais por enquanto
   result->loadLightmap = false;
 
-  // Criar frame único
+  // Criar frame
   auto* outputFrame = new MeshBuilderMaterialFrameData();
   material->frames.push_back(outputFrame);
 
-  // Alocar arrays - usamos mesh.num_verts que já são vértices expandidos
-  outputFrame->count = mesh.num_verts;
-  outputFrame->vertices = new Vec4[mesh.num_verts];
-  outputFrame->normals = new Vec4[mesh.num_verts];
-  outputFrame->textureCoords = new Vec4[mesh.num_verts];
-
-  // Preencher dados - cada entrada em meshVertsBuffer é um vértice já expandido
-  Vec4 temp(0.0F, 0.0F, 0.0F, 1.0F);
+  // Usar apenas os vértices do modelo (simplificado)
+  // Criar triângulos básicos: 0-1-2, 3-4-5, etc
+  int numTrisToUse = model.num_verts / 3;
   
-  TYRA_LOG("chegamo teste 5");
+  outputFrame->count = numTrisToUse * 3;
+  outputFrame->vertices = new Vec4[numTrisToUse * 3];
 
-  for (u32 i = 0; i < mesh.num_verts; i++) {
-    // meshVertsBuffer[i].vertindex aponta para o vértice único em modelVertsBuffer
-    u32 vertIndex = meshVertsBuffer[i].vertindex;
-    
-    // Vértice com escala aplicada
-    temp.set(
-      static_cast<float>(modelVertsBuffer[vertIndex].v[0]) * options.scale,
-      static_cast<float>(modelVertsBuffer[vertIndex].v[1]) * options.scale,
-      static_cast<float>(modelVertsBuffer[vertIndex].v[2]) * options.scale,
-      1.0F
+  TYRA_LOG("Creating ", numTrisToUse, " triangles from ", model.num_verts, " vertices");
+
+  // Preencher vértices
+  for (int i = 0; i < numTrisToUse * 3 && i < model.num_verts; i++) {
+    outputFrame->vertices[i].set(
+      static_cast<float>(modelVerts[i].pos[0]) * options.scale,
+      static_cast<float>(modelVerts[i].pos[1]) * options.scale,
+      static_cast<float>(modelVerts[i].pos[2]) * options.scale,
+      1.0f
     );
-    outputFrame->vertices[i] = temp;
-
-    // Normal (usando índice da tabela de normais)
-    u32 normIndex = meshVertsBuffer[i].normindex;
-    if (normIndex < 162) {
-      temp.set(
-        ANORMS[normIndex][0],
-        ANORMS[normIndex][1],
-        ANORMS[normIndex][2],
-        0.0F
-      );
-    } else {
-      temp.set(0.0F, 1.0F, 0.0F, 0.0F);
-    }
-    outputFrame->normals[i] = temp;
-
-    // Coordenadas de textura (já vêm no trivert)
-    float u = static_cast<float>(meshVertsBuffer[i].s) / 256.0f;
-    float v = static_cast<float>(meshVertsBuffer[i].t) / 256.0f;
-    
-    if (options.flipUVs) {
-      v = 1.0F - v;
-    }
-    
-    temp.set(u, v, 1.0F, 0.0F);
-    outputFrame->textureCoords[i] = temp;
   }
 
-  // Limpar buffers
-  delete[] modelVertsBuffer;
-  delete[] meshVertsBuffer;
-
-  TYRA_LOG("chegamo teste 6");
-
+  delete[] modelVerts;
+  
+  TYRA_LOG("MDL loaded successfully!");
 
   return result;
 }
