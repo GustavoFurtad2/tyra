@@ -75,11 +75,11 @@ typedef struct {
   int vert_index;
 } mesh_t;
 
+// Estrutura de triângulo que aponta para os vértices
 typedef struct {
-  short vert_index;
-  short normal_index;
-  short s;
-  short t;
+  short vertindex;  // índice no array de trivert_t
+  short normindex;  // índice de normal
+  short s, t;       // coordenadas de textura
 } trivert_t;
 
 typedef struct {
@@ -279,17 +279,18 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
   model_t model;
   fread(&model, sizeof(model), 1, file);
 
+  TYRA_LOG("chegamo teste 1");
   // Ler primeiro mesh
   fseek(file, header.ofs_bodyparts + model.meshindex, SEEK_SET);
   mesh_t mesh;
   fread(&mesh, sizeof(mesh), 1, file);
 
-  // Carregar vértices do mesh
+  // Carregar triângulos (vértices expandidos do mesh)
   auto meshVertsBuffer = new trivert_t[mesh.num_verts];
   fseek(file, header.ofs_bodyparts + mesh.vert_index, SEEK_SET);
   fread(meshVertsBuffer, sizeof(trivert_t), mesh.num_verts, file);
 
-  // Carregar vértices do modelo (posições)
+  // Carregar vértices do modelo (posições únicas)
   auto modelVertsBuffer = new mvertex_t[model.num_verts];
   fseek(file, header.ofs_bodyparts + model.vert_index, SEEK_SET);
   fread(modelVertsBuffer, sizeof(mvertex_t), model.num_verts, file);
@@ -308,9 +309,12 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
   // Criar mesh builder data
   auto result = std::make_unique<MeshBuilderData>();
   
+  TYRA_LOG("chegamo teste 2");
+
   auto* material = new MeshBuilderMaterialData();
   material->name = FileUtils::getFilenameWithoutExtension(filename);
   
+  TYRA_LOG("chegamo teste 3");
   // Se tiver skin embutida, usar ela, senão procurar PNG externo
   if (!skinName.empty()) {
     material->texturePath = skinName;
@@ -319,6 +323,8 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
     material->texturePath.value().append(".png");
   }
   
+  TYRA_LOG("chegamo teste 4");
+
   result->materials.push_back(material);
   result->loadNormals = true;
   result->loadLightmap = false;
@@ -327,19 +333,20 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
   auto* outputFrame = new MeshBuilderMaterialFrameData();
   material->frames.push_back(outputFrame);
 
-  // Alocar arrays
-  u32 totalVertices = mesh.num_tris * 3;
-  outputFrame->count = totalVertices;
-  outputFrame->vertices = new Vec4[totalVertices];
-  outputFrame->normals = new Vec4[totalVertices];
-  outputFrame->textureCoords = new Vec4[totalVertices];
+  // Alocar arrays - usamos mesh.num_verts que já são vértices expandidos
+  outputFrame->count = mesh.num_verts;
+  outputFrame->vertices = new Vec4[mesh.num_verts];
+  outputFrame->normals = new Vec4[mesh.num_verts];
+  outputFrame->textureCoords = new Vec4[mesh.num_verts];
 
-  // Preencher dados
+  // Preencher dados - cada entrada em meshVertsBuffer é um vértice já expandido
   Vec4 temp(0.0F, 0.0F, 0.0F, 1.0F);
   
+  TYRA_LOG("chegamo teste 5");
+
   for (u32 i = 0; i < mesh.num_verts; i++) {
-    // Índice do vértice no buffer do modelo
-    u32 vertIndex = meshVertsBuffer[i].vert_index;
+    // meshVertsBuffer[i].vertindex aponta para o vértice único em modelVertsBuffer
+    u32 vertIndex = meshVertsBuffer[i].vertindex;
     
     // Vértice com escala aplicada
     temp.set(
@@ -351,7 +358,7 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
     outputFrame->vertices[i] = temp;
 
     // Normal (usando índice da tabela de normais)
-    u32 normIndex = meshVertsBuffer[i].normal_index;
+    u32 normIndex = meshVertsBuffer[i].normindex;
     if (normIndex < 162) {
       temp.set(
         ANORMS[normIndex][0],
@@ -364,7 +371,7 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
     }
     outputFrame->normals[i] = temp;
 
-    // Coordenadas de textura (já vêm normalizadas no MDL)
+    // Coordenadas de textura (já vêm no trivert)
     float u = static_cast<float>(meshVertsBuffer[i].s) / 256.0f;
     float v = static_cast<float>(meshVertsBuffer[i].t) / 256.0f;
     
@@ -379,6 +386,9 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
   // Limpar buffers
   delete[] modelVertsBuffer;
   delete[] meshVertsBuffer;
+
+  TYRA_LOG("chegamo teste 6");
+
 
   return result;
 }
