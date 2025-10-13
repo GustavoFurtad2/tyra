@@ -17,7 +17,6 @@
 namespace Tyra {
 
 #define MDL_IDENT (('T' << 24) + ('S' << 16) + ('D' << 8) + 'I')
-
 #define MDL_VERSION 10
 
 typedef struct {
@@ -62,35 +61,197 @@ typedef struct {
   char name[64];
   int num_meshes;
   int meshindex;
+  int num_verts;
+  int vert_index;
+  int num_norms;
+  int norm_index;
 } model_t;
 
 typedef struct {
-  int num_verts;
-  int vert_index;
+  int skinref;
   int num_tris;
   int tri_index;
+  int num_verts;
+  int vert_index;
 } mesh_t;
 
 typedef struct {
-  char name[16];
-  float bboxmin[3];
-  float bboxmax[3];
-  int framedataindex;
-} frame_t;
-
-typedef struct {
-  int vert_index[3];
-  int normal_index[3];
-} triangle_t;
-
-typedef struct {
-  short s, t;
-} texCoord_t;
+  short vert_index;
+  short normal_index;
+  short s;
+  short t;
+} trivert_t;
 
 typedef struct {
   unsigned char v[3];
   unsigned char normal_index;
 } mvertex_t;
+
+// Tabela de normais pré-calculadas (mesma do Quake)
+static const float ANORMS[162][3] = {
+  {-0.525731f, 0.000000f, 0.850651f},
+  {-0.442863f, 0.238856f, 0.864188f},
+  {-0.295242f, 0.000000f, 0.955423f},
+  {-0.309017f, 0.500000f, 0.809017f},
+  {-0.162460f, 0.262866f, 0.951056f},
+  {0.000000f, 0.000000f, 1.000000f},
+  {0.000000f, 0.850651f, 0.525731f},
+  {-0.147621f, 0.716567f, 0.681718f},
+  {0.147621f, 0.716567f, 0.681718f},
+  {0.000000f, 0.525731f, 0.850651f},
+  {0.309017f, 0.500000f, 0.809017f},
+  {0.525731f, 0.000000f, 0.850651f},
+  {0.295242f, 0.000000f, 0.955423f},
+  {0.442863f, 0.238856f, 0.864188f},
+  {0.162460f, 0.262866f, 0.951056f},
+  {-0.681718f, 0.147621f, 0.716567f},
+  {-0.809017f, 0.309017f, 0.500000f},
+  {-0.587785f, 0.425325f, 0.688191f},
+  {-0.850651f, 0.525731f, 0.000000f},
+  {-0.864188f, 0.442863f, 0.238856f},
+  {-0.716567f, 0.681718f, 0.147621f},
+  {-0.688191f, 0.587785f, 0.425325f},
+  {-0.500000f, 0.809017f, 0.309017f},
+  {-0.238856f, 0.864188f, 0.442863f},
+  {-0.425325f, 0.688191f, 0.587785f},
+  {-0.716567f, 0.681718f, -0.147621f},
+  {-0.500000f, 0.809017f, -0.309017f},
+  {-0.525731f, 0.850651f, 0.000000f},
+  {0.000000f, 0.850651f, -0.525731f},
+  {-0.238856f, 0.864188f, -0.442863f},
+  {0.000000f, 0.955423f, -0.295242f},
+  {-0.262866f, 0.951056f, -0.162460f},
+  {0.000000f, 1.000000f, 0.000000f},
+  {0.000000f, 0.955423f, 0.295242f},
+  {-0.262866f, 0.951056f, 0.162460f},
+  {0.238856f, 0.864188f, 0.442863f},
+  {0.262866f, 0.951056f, 0.162460f},
+  {0.500000f, 0.809017f, 0.309017f},
+  {0.238856f, 0.864188f, -0.442863f},
+  {0.262866f, 0.951056f, -0.162460f},
+  {0.500000f, 0.809017f, -0.309017f},
+  {0.850651f, 0.525731f, 0.000000f},
+  {0.716567f, 0.681718f, 0.147621f},
+  {0.716567f, 0.681718f, -0.147621f},
+  {0.525731f, 0.850651f, 0.000000f},
+  {0.425325f, 0.688191f, 0.587785f},
+  {0.864188f, 0.442863f, 0.238856f},
+  {0.688191f, 0.587785f, 0.425325f},
+  {0.809017f, 0.309017f, 0.500000f},
+  {0.681718f, 0.147621f, 0.716567f},
+  {0.587785f, 0.425325f, 0.688191f},
+  {0.955423f, 0.295242f, 0.000000f},
+  {1.000000f, 0.000000f, 0.000000f},
+  {0.951056f, 0.162460f, 0.262866f},
+  {0.850651f, -0.525731f, 0.000000f},
+  {0.955423f, -0.295242f, 0.000000f},
+  {0.864188f, -0.442863f, 0.238856f},
+  {0.951056f, -0.162460f, 0.262866f},
+  {0.809017f, -0.309017f, 0.500000f},
+  {0.681718f, -0.147621f, 0.716567f},
+  {0.850651f, 0.000000f, 0.525731f},
+  {0.864188f, 0.442863f, -0.238856f},
+  {0.809017f, 0.309017f, -0.500000f},
+  {0.951056f, 0.162460f, -0.262866f},
+  {0.525731f, 0.000000f, -0.850651f},
+  {0.681718f, 0.147621f, -0.716567f},
+  {0.681718f, -0.147621f, -0.716567f},
+  {0.850651f, 0.000000f, -0.525731f},
+  {0.809017f, -0.309017f, -0.500000f},
+  {0.864188f, -0.442863f, -0.238856f},
+  {0.951056f, -0.162460f, -0.262866f},
+  {0.147621f, 0.716567f, -0.681718f},
+  {0.309017f, 0.500000f, -0.809017f},
+  {0.425325f, 0.688191f, -0.587785f},
+  {0.442863f, 0.238856f, -0.864188f},
+  {0.587785f, 0.425325f, -0.688191f},
+  {0.688191f, 0.587785f, -0.425325f},
+  {-0.147621f, 0.716567f, -0.681718f},
+  {-0.309017f, 0.500000f, -0.809017f},
+  {0.000000f, 0.525731f, -0.850651f},
+  {-0.525731f, 0.000000f, -0.850651f},
+  {-0.442863f, 0.238856f, -0.864188f},
+  {-0.295242f, 0.000000f, -0.955423f},
+  {-0.162460f, 0.262866f, -0.951056f},
+  {0.000000f, 0.000000f, -1.000000f},
+  {0.295242f, 0.000000f, -0.955423f},
+  {0.162460f, 0.262866f, -0.951056f},
+  {-0.442863f, -0.238856f, -0.864188f},
+  {-0.309017f, -0.500000f, -0.809017f},
+  {-0.162460f, -0.262866f, -0.951056f},
+  {0.000000f, -0.850651f, -0.525731f},
+  {-0.147621f, -0.716567f, -0.681718f},
+  {0.147621f, -0.716567f, -0.681718f},
+  {0.000000f, -0.525731f, -0.850651f},
+  {0.309017f, -0.500000f, -0.809017f},
+  {0.442863f, -0.238856f, -0.864188f},
+  {0.162460f, -0.262866f, -0.951056f},
+  {0.238856f, -0.864188f, -0.442863f},
+  {0.500000f, -0.809017f, -0.309017f},
+  {0.425325f, -0.688191f, -0.587785f},
+  {0.716567f, -0.681718f, -0.147621f},
+  {0.688191f, -0.587785f, -0.425325f},
+  {0.587785f, -0.425325f, -0.688191f},
+  {0.000000f, -0.955423f, -0.295242f},
+  {0.000000f, -1.000000f, 0.000000f},
+  {0.262866f, -0.951056f, -0.162460f},
+  {0.000000f, -0.850651f, 0.525731f},
+  {0.000000f, -0.955423f, 0.295242f},
+  {0.238856f, -0.864188f, 0.442863f},
+  {0.262866f, -0.951056f, 0.162460f},
+  {0.500000f, -0.809017f, 0.309017f},
+  {0.716567f, -0.681718f, 0.147621f},
+  {0.525731f, -0.850651f, 0.000000f},
+  {-0.238856f, -0.864188f, -0.442863f},
+  {-0.500000f, -0.809017f, -0.309017f},
+  {-0.262866f, -0.951056f, -0.162460f},
+  {-0.850651f, -0.525731f, 0.000000f},
+  {-0.716567f, -0.681718f, -0.147621f},
+  {-0.716567f, -0.681718f, 0.147621f},
+  {-0.525731f, -0.850651f, 0.000000f},
+  {-0.500000f, -0.809017f, 0.309017f},
+  {-0.238856f, -0.864188f, 0.442863f},
+  {-0.262866f, -0.951056f, 0.162460f},
+  {-0.864188f, -0.442863f, 0.238856f},
+  {-0.809017f, -0.309017f, 0.500000f},
+  {-0.688191f, -0.587785f, 0.425325f},
+  {-0.681718f, -0.147621f, 0.716567f},
+  {-0.442863f, -0.238856f, 0.864188f},
+  {-0.587785f, -0.425325f, 0.688191f},
+  {-0.309017f, -0.500000f, 0.809017f},
+  {-0.147621f, -0.716567f, 0.681718f},
+  {-0.425325f, -0.688191f, 0.587785f},
+  {-0.162460f, -0.262866f, 0.951056f},
+  {0.442863f, -0.238856f, 0.864188f},
+  {0.162460f, -0.262866f, 0.951056f},
+  {0.309017f, -0.500000f, 0.809017f},
+  {0.147621f, -0.716567f, 0.681718f},
+  {0.000000f, -0.525731f, 0.850651f},
+  {0.425325f, -0.688191f, 0.587785f},
+  {0.587785f, -0.425325f, 0.688191f},
+  {0.688191f, -0.587785f, 0.425325f},
+  {-0.955423f, 0.295242f, 0.000000f},
+  {-0.951056f, 0.162460f, 0.262866f},
+  {-1.000000f, 0.000000f, 0.000000f},
+  {-0.850651f, 0.000000f, 0.525731f},
+  {-0.955423f, -0.295242f, 0.000000f},
+  {-0.951056f, -0.162460f, 0.262866f},
+  {-0.864188f, 0.442863f, -0.238856f},
+  {-0.951056f, 0.162460f, -0.262866f},
+  {-0.809017f, 0.309017f, -0.500000f},
+  {-0.864188f, -0.442863f, -0.238856f},
+  {-0.951056f, -0.162460f, -0.262866f},
+  {-0.809017f, -0.309017f, -0.500000f},
+  {-0.681718f, 0.147621f, -0.716567f},
+  {-0.681718f, -0.147621f, -0.716567f},
+  {-0.850651f, 0.000000f, -0.525731f},
+  {-0.688191f, 0.587785f, -0.425325f},
+  {-0.587785f, 0.425325f, -0.688191f},
+  {-0.425325f, 0.688191f, -0.587785f},
+  {-0.425325f, -0.688191f, -0.587785f},
+  {-0.587785f, -0.425325f, -0.688191f},
+  {-0.688191f, -0.587785f, -0.425325f}
+};
 
 std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
                                                  MDLLoaderOptions options) {
@@ -108,66 +269,131 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
   TYRA_ASSERT((header.ident == MDL_IDENT) && (header.version == MDL_VERSION),
               "This MDL file is not in correct format!");
 
+  // Ler bodypart
   fseek(file, header.ofs_bodyparts, SEEK_SET);
   bodypart_t bodypart;
   fread(&bodypart, sizeof(bodypart), 1, file);
 
+  // Ler model
   fseek(file, header.ofs_bodyparts + bodypart.modelindex, SEEK_SET);
   model_t model;
   fread(&model, sizeof(model), 1, file);
 
+  // Ler primeiro mesh
   fseek(file, header.ofs_bodyparts + model.meshindex, SEEK_SET);
   mesh_t mesh;
   fread(&mesh, sizeof(mesh), 1, file);
 
-  auto trianglesBuffer = new triangle_t[mesh.num_tris];
-  fseek(file, header.ofs_bodyparts + mesh.tri_index, SEEK_SET);
-  fread(trianglesBuffer, sizeof(triangle_t), mesh.num_tris, file);
-
-  auto verticesBuffer = new mvertex_t[mesh.num_verts];
+  // Carregar vértices do mesh
+  auto meshVertsBuffer = new trivert_t[mesh.num_verts];
   fseek(file, header.ofs_bodyparts + mesh.vert_index, SEEK_SET);
-  fread(verticesBuffer, sizeof(mvertex_t), mesh.num_verts, file);
+  fread(meshVertsBuffer, sizeof(trivert_t), mesh.num_verts, file);
+
+  // Carregar vértices do modelo (posições)
+  auto modelVertsBuffer = new mvertex_t[model.num_verts];
+  fseek(file, header.ofs_bodyparts + model.vert_index, SEEK_SET);
+  fread(modelVertsBuffer, sizeof(mvertex_t), model.num_verts, file);
+
+  // Carregar skin name (textura embutida)
+  std::string skinName;
+  if (header.num_skins > 0) {
+    skin_t skin;
+    fseek(file, header.ofs_skins, SEEK_SET);
+    fread(&skin, sizeof(skin_t), 1, file);
+    skinName = std::string(skin.name);
+  }
 
   fclose(file);
 
-  // create mesh builder data
+  // Criar mesh builder data
   auto result = std::make_unique<MeshBuilderData>();
+  
   auto* material = new MeshBuilderMaterialData();
   material->name = FileUtils::getFilenameWithoutExtension(filename);
-  result->materials.push_back(material);
   
-  material->frames.resize(1);
-  material->frames[0]->count = mesh.num_tris * 3;
-  material->frames[0]->vertices = new Vec4[mesh.num_tris * 3];
+  // Se tiver skin embutida, usar ela, senão procurar PNG externo
+  if (!skinName.empty()) {
+    material->texturePath = skinName;
+  } else {
+    material->texturePath = material->name;
+    material->texturePath.value().append(".png");
+  }
+  
+  result->materials.push_back(material);
+  result->loadNormals = true;
+  result->loadLightmap = false;
 
-  for (int i = 0; i < mesh.num_tris; i++) {
-    for (int j = 0; j < 3; j++) {
-      int vertIndex = trianglesBuffer[i].vert_index[j];
-      material->frames[0]->vertices[i * 3 + j].set(
-        float(verticesBuffer[vertIndex].v[0]),
-        float(verticesBuffer[vertIndex].v[1]),
-        float(verticesBuffer[vertIndex].v[2]),
-        1.0f
+  // Criar frame único
+  auto* outputFrame = new MeshBuilderMaterialFrameData();
+  material->frames.push_back(outputFrame);
+
+  // Alocar arrays
+  u32 totalVertices = mesh.num_tris * 3;
+  outputFrame->count = totalVertices;
+  outputFrame->vertices = new Vec4[totalVertices];
+  outputFrame->normals = new Vec4[totalVertices];
+  outputFrame->textureCoords = new Vec4[totalVertices];
+
+  // Preencher dados
+  Vec4 temp(0.0F, 0.0F, 0.0F, 1.0F);
+  
+  for (u32 i = 0; i < mesh.num_verts; i++) {
+    // Índice do vértice no buffer do modelo
+    u32 vertIndex = meshVertsBuffer[i].vert_index;
+    
+    // Vértice com escala aplicada
+    temp.set(
+      static_cast<float>(modelVertsBuffer[vertIndex].v[0]) * options.scale,
+      static_cast<float>(modelVertsBuffer[vertIndex].v[1]) * options.scale,
+      static_cast<float>(modelVertsBuffer[vertIndex].v[2]) * options.scale,
+      1.0F
+    );
+    outputFrame->vertices[i] = temp;
+
+    // Normal (usando índice da tabela de normais)
+    u32 normIndex = meshVertsBuffer[i].normal_index;
+    if (normIndex < 162) {
+      temp.set(
+        ANORMS[normIndex][0],
+        ANORMS[normIndex][1],
+        ANORMS[normIndex][2],
+        0.0F
       );
+    } else {
+      temp.set(0.0F, 1.0F, 0.0F, 0.0F);
     }
+    outputFrame->normals[i] = temp;
+
+    // Coordenadas de textura (já vêm normalizadas no MDL)
+    float u = static_cast<float>(meshVertsBuffer[i].s) / 256.0f;
+    float v = static_cast<float>(meshVertsBuffer[i].t) / 256.0f;
+    
+    if (options.flipUVs) {
+      v = 1.0F - v;
+    }
+    
+    temp.set(u, v, 1.0F, 0.0F);
+    outputFrame->textureCoords[i] = temp;
   }
 
-  delete[] verticesBuffer;
-  delete[] trianglesBuffer;
+  // Limpar buffers
+  delete[] modelVertsBuffer;
+  delete[] meshVertsBuffer;
 
   return result;
 }
 
-std::unique_ptr<Tyra::MeshBuilderData> MDLLoader::load(const char* fullpath) {
+std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath) {
   return load(fullpath, MDLLoaderOptions());
 }
 
-std::unique_ptr<Tyra::MeshBuilderData> MDLLoader::load(const std::string& fullpath) {
+std::unique_ptr<MeshBuilderData> MDLLoader::load(const std::string& fullpath) {
   return load(fullpath.c_str(), MDLLoaderOptions());
 }
 
-std::unique_ptr<Tyra::MeshBuilderData> MDLLoader::load(const std::string& fullpath, MDLLoaderOptions options) {
-  return load(fullpath, options);
+std::unique_ptr<MeshBuilderData> MDLLoader::load(const std::string& fullpath, 
+                                                 MDLLoaderOptions options) {
+  return load(fullpath.c_str(), options);
 }
 
-}
+}  // namespace Tyra
