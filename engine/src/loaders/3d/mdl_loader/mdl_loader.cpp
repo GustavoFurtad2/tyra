@@ -158,4 +158,16 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
   return result;
 }
 
+std::unique_ptr<Tyra::MeshBuilderData> MDLLoader::load(const char* fullpath) {
+  return load(fullpath, MDLLoaderOptions());
+}
+
+std::unique_ptr<Tyra::MeshBuilderData> MDLLoader::load(const std::string& fullpath) {
+  return load(fullpath.c_str(), MDLLoaderOptions());
+}
+
+std::unique_ptr<Tyra::MeshBuilderData> MDLLoader::load(const std::string& fullpath, MDLLoaderOptions options) {
+  return load(fullpath, options);
+}
+
 }
