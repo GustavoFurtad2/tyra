@@ -16,6 +16,8 @@
 
 namespace Tyra {
 
+typedef float vec3_t[3];
+
 struct MDLLoaderOptions {
   bool flipUVs = false;
   float scale = 1.0F;
