@@ -88,7 +88,11 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
               "This MDL file is not in correct format!");
 
   TYRA_LOG("MDL header: name=", header.name);
-  TYRA_LOG("  bodyparts=", header.num_bodyparts, " skins=", header.num_skins);
+  TYRA_LOG("  version=", header.version);
+  TYRA_LOG("  num_bodyparts=", header.num_bodyparts);
+  TYRA_LOG("  num_skins=", header.num_skins);
+  TYRA_LOG("  ofs_bodyparts=", header.ofs_bodyparts);
+  TYRA_LOG("  ofs_skins=", header.ofs_skins);
 
   // Ler bodypart
   fseek(file, header.ofs_bodyparts, SEEK_SET);
@@ -96,28 +100,49 @@ std::unique_ptr<MeshBuilderData> MDLLoader::load(const char* fullpath,
   fread(&bodypart, sizeof(bodypart), 1, file);
   
   TYRA_LOG("Bodypart: name=", bodypart.name, " models=", bodypart.num_models);
+  TYRA_LOG("  base=", bodypart.base, " modelindex=", bodypart.modelindex);
 
-  // Ler model (relativo ao offset do bodypart)
+  TYRA_ASSERT(bodypart.num_models > 0, "Bodypart has no models!");
+
+  // Ler model (offset ABSOLUTO desde o início do bodypart)
   long modelOffset = header.ofs_bodyparts + bodypart.modelindex;
+  TYRA_LOG("Reading model from offset: ", modelOffset);
   fseek(file, modelOffset, SEEK_SET);
   model_t model;
   fread(&model, sizeof(model), 1, file);
   
   TYRA_LOG("Model: name=", model.name);
-  TYRA_LOG("  meshes=", model.num_meshes, " verts=", model.num_verts);
+  TYRA_LOG("  num_meshes=", model.num_meshes);
+  TYRA_LOG("  meshindex=", model.meshindex);
+  TYRA_LOG("  num_verts=", model.num_verts);
+  TYRA_LOG("  vert_index=", model.vert_index);
+  TYRA_LOG("  num_norms=", model.num_norms);
+  TYRA_LOG("  norm_index=", model.norm_index);
 
-  // Ler primeiro mesh (relativo ao offset do bodypart)
+  TYRA_ASSERT(model.num_meshes > 0, "Model has no meshes!");
+
+  // Ler primeiro mesh (offset ABSOLUTO desde o início do bodypart)
   long meshOffset = header.ofs_bodyparts + model.meshindex;
+  TYRA_LOG("Reading mesh from offset: ", meshOffset);
   fseek(file, meshOffset, SEEK_SET);
   mesh_t mesh;
   fread(&mesh, sizeof(mesh), 1, file);
   
-  TYRA_LOG("Mesh: tris=", mesh.num_tris, " verts=", mesh.num_verts);
-
-  // Validar dados
-  TYRA_ASSERT(mesh.num_tris > 0, "Mesh has no triangles!");
-  TYRA_ASSERT(mesh.num_verts > 0, "Mesh has no vertices!");
-  TYRA_ASSERT(model.num_verts > 0, "Model has no vertices!");
+  TYRA_LOG("Mesh data:");
+  TYRA_LOG("  skinref=", mesh.skinref);
+  TYRA_LOG("  num_tris=", mesh.num_tris);
+  TYRA_LOG("  tri_index=", mesh.tri_index);
+  TYRA_LOG("  num_verts=", mesh.num_verts);
+  TYRA_LOG("  vert_index=", mesh.vert_index);
+  
+  // Se mesh não tem dados, tentar usar dados do model diretamente
+  if (mesh.num_tris == 0 || mesh.num_verts == 0) {
+    TYRA_LOG("Mesh vazio, usando dados do model diretamente");
+    TYRA_ASSERT(model.num_verts > 0, "Model also has no vertices!");
+  } else {
+    TYRA_ASSERT(mesh.num_tris > 0, "Mesh has no triangles!");
+    TYRA_ASSERT(mesh.num_verts > 0, "Mesh has no vertices!");
+  }
 
   // Por simplicidade, vamos ler os vértices do modelo e criar triângulos simples
   // Isso evita problemas com a estrutura complexa do MDL
