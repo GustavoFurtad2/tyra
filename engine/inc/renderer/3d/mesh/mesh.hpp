@@ -52,7 +52,7 @@ class Mesh {
 
       angles.x = Math::asin(sy);
       angles.y = Math::atan2(rotation.data[6], rotation.data[10]);;
-      angles.z = Math::atan2(rotation.data[1], rotation.data[0])
+      angles.z = Math::atan2(rotation.data[1], rotation.data[0]);
     }
     else {
 
