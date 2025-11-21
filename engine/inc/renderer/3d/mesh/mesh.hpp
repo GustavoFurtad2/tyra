@@ -41,6 +41,29 @@ class Mesh {
     return reinterpret_cast<Vec4*>(&translation.data[3 * 4]);
   }
 
+  inline Vec4* getAngle() {
+
+    Vec4 angles;
+
+    float sy = -rotation.data[2];
+
+    if (Math::abs(sy) < 0.99999f) {
+
+      angles.x = Math::asin(sy);
+      angles.y = Math::atan2(rotation.data[6], rotation.data[10]);
+      angles.z = Math::atan2(rotation.data[1], rotation.data[0])
+    }
+    else {
+
+      angles.x = Math::asin(sy)
+      angles.y = Math::atan2(-rotation.data[8], rotation.data[5])
+      angles.z = 0.0f;
+    }
+
+    angles.w = 1.0f;
+    return angles;
+  }
+
   void setPosition(const Vec4& v);
 
  protected:
