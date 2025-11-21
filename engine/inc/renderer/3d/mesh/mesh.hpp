@@ -46,7 +46,7 @@ class Mesh {
 
     Vec4 angles;
 
-    float sy = -rotation.data[8];
+    float sy = rotation.data[8];
 
     if (std::abs(sy) < 0.99999f) {
 
